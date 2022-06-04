@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
-import sys
+import os
+import copy
 
 
 def get_script_dir() -> str:
@@ -13,6 +14,7 @@ def get_script_dir() -> str:
 
 
 def main():
+    # test
     card = cv2.imread(f"{get_script_dir()}/../images/cards/15.jpg")
     background = cv2.imread(
         f"{get_script_dir()}/../images/backgrounds/000002.jpg")
@@ -20,6 +22,21 @@ def main():
     cv2.imwrite("fig.png", background)
     cv2.imwrite("fig.png", affined)
     cv2.imwrite("fig.png", background)
+
+    cards_path: str = f"{get_script_dir()}/../images/cards/"
+    background_path: str = f"{get_script_dir()}/../images/backgrounds/"
+    dataset_path: str = f"{get_script_dir()}/../images/datasets/"
+    for i in range(53):
+        card = cv2.imread(f"{cards_path}{4 + i}.jpg")
+        for j in range(1, 400):  # num background
+            print(f"(i, j): {(i, j)}")
+            background = cv2.imread(f"{background_path}{j:06}.jpg")
+            for k in range(100):  # try affine count
+                converted = random_affine(copy.deepcopy(
+                    card), copy.deepcopy(background))
+                os.makedirs(f"{dataset_path}{i}", exist_ok=True)
+                print(f"{dataset_path}{i}/{j * k + k}.jpg")
+                cv2.imwrite(f"{dataset_path}{i}/{j * k + k}.jpg", converted)
 
 
 def random_affine(card_img: np.ndarray, background_img: np.ndarray) -> np.ndarray:
@@ -37,18 +54,18 @@ def random_affine(card_img: np.ndarray, background_img: np.ndarray) -> np.ndarra
     dst_pts = np.array(
         [[0, 0], [np.random.random() * 30, gen_y()], [gen_x(), np.random.random() * 30]], dtype=np.float32)
     matrix = cv2.getAffineTransform(src_pts, dst_pts)
-    matrix = matrix * 0.9
-    print(src_pts)
-    print(matrix.dtype)
-    # matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
-    print(matrix)
-    print(matrix.shape)
     height = background_img.shape[0]
     width = background_img.shape[1]
-    print(card_img.shape)
+    matrix = matrix * 1.2 * min(height, width) * \
+        max(card_img.shape[0], card_img.shape[1]) / 100
+
+    rotate_mat = cv2.getRotationMatrix2D(
+        (0.0, 0.0), np.random.random() * 360, 1.0)
+    matrix += rotate_mat
+    # matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
     size = max(card_img.shape[0], card_img.shape[1]) * 3 + 50
-    dx = (np.random.random() - 0.5) * width + width / 2
-    dy = (np.random.random() - 0.5) * height + height / 2
+    dx = (np.random.random() - 0.5) * width / 3 + width / 3
+    dy = (np.random.random() - 0.5) * height / 3 + height / 3
     matrix[0][2] = dx
     matrix[1][2] = dy
     dsize = (width, height)
