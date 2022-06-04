@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "/root/.local/share/virtualenvs/card-recognition-ZFT0t9hC/lib/python3.8/site-packages"
+    ],
+    "python.autoComplete.extraPaths": [
+        "/root/.local/share/virtualenvs/card-recognition-ZFT0t9hC/lib/python3.8/site-packages"
+    ]
+}

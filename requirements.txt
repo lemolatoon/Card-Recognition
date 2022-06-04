@@ -1,0 +1,7 @@
+torch --extra-index-url https://download.pytorch.org/whl/cu113
+torchvision --extra-index-url https://download.pytorch.org/whl/cu113
+torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+opencv-python
+matplotlib
+pyheif
+pillow
