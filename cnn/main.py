@@ -11,6 +11,12 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torchvision
 import sys
+import copy
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim import lr_scheduler
+import torchvision.models as models
+import pandas as pd
 
 
 def get_script_dir() -> str:
@@ -25,6 +31,77 @@ def get_script_dir() -> str:
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+def train_model(train_loader: DataLoader, test_loader: DataLoader, model: nn.Module, criterion, optimizer: optim.Optimizer, scheduler, num_epochs: int = 100):
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_acc = 0.0
+
+    # iter, train_loss, train_acc, val_loss, val_acc
+    batch_size: int = iter(train_loader).next()[0].shape[0]
+    history = np.zeros(5)
+
+    for epoch in range(num_epochs):
+        train_acc, train_loss = 0.0, 0.0
+        val_acc, val_loss = 0.0, 0.0
+        num_train, num_test = 0, 0
+
+        model.train()
+        inputs: torch.Tensor
+        labels: torch.Tensor
+        for inputs, labels in tqdm(train_loader):
+            num_train += len(labels)
+
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            optimizer.zero_grad()
+
+            outputs: torch.Tensor = model(inputs).to(device)
+            _, predicted = torch.max(outputs, 1)
+            loss: torch.Tensor = criterion(outputs, labels)
+
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item()
+            train_acc += (predicted == labels).sum().item()
+
+            scheduler.step()
+
+        inputs_test: torch.Tensor
+        labels_test: torch.Tensor
+        for inputs_test, labels_test in test_loader:
+            model.eval()
+            num_test += len(labels_test)
+            inputs_test = inputs_test.to(device)
+            labels_test = labels_test.to(device)
+
+            with torch.set_grad_enabled(False):
+                outputs_test = model(inputs_test)
+                _, predicted_test = torch.max(outputs_test, 1)
+                loss_test: torch.Tensor = criterion(outputs_test, labels_test)
+
+            val_loss += loss_test.item()
+            val_acc += (predicted_test == labels_test).sum().item()
+
+        train_acc = train_acc / num_train
+        val_acc = val_acc / num_test
+        train_loss = train_loss * batch_size / num_train
+        val_loss = val_loss * batch_size / num_test
+
+        if val_acc > best_acc:
+            best_acc = val_acc
+            best_model_wts = copy.deepcopy(model.state_dict())
+
+        print(
+            f"Epoch [{epoch + 1}/{num_epochs}] loss: {train_loss:.5f}, acc: {train_acc:.5f}, val_loss: {val_loss:.5f}, val_acc: {val_acc:.5f}")
+        items = np.array([epoch + 1, train_loss, train_acc, val_loss, val_acc])
+        history = np.vstack((history, items))
+
+    print(f"Best val Acc: {best_acc:.5f}")
+    model.load_state_dict(best_model_wts)
+    return model, history
+
+
 def main():
     train_dataloader, test_dataloader = get_dataloader()
 
@@ -35,6 +112,71 @@ def main():
     out = torchvision.utils.make_grid(images[:3])
 
     imshow(out, title=[get_class_name(label) for label in labels[:3]])
+
+    model_ft = get_model()
+    criterion = nn.CrossEntropyLoss()
+
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+
+    exp_lr_scheduler = lr_scheduler.StepLR(
+        optimizer_ft, step_size=7, gamma=0.1)
+
+    print(device)
+    model_ft, history = train_model(train_dataloader, test_dataloader,
+                                    model_ft, criterion, optimizer_ft, exp_lr_scheduler)
+    torch.save(model_ft.state_dict(), "param.pt")
+    pd.to_pickle(history, "history.pkl")
+
+
+def get_model() -> nn.Module:
+    model_ft = models.resnet18(pretrained=True)
+    num_ftrs = model_ft.fc.in_features
+    # 53 classify
+    model_ft.fc = ModelHead(num_ftrs, 256, 53)
+
+    model_ft.to(device)
+    return model_ft
+
+
+class ModelHead(nn.Module):
+    def __init__(self, num_input: int, num_hidden: int, num_output: int):
+        super().__init__()
+        self.fc1 = nn.Linear(num_input, num_hidden)
+        self.fc2 = nn.Linear(num_hidden, num_output)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.fc2(x)
+
+        return x
+
+
+def visualize_model(test_loader, model, num_images=6):
+    was_training = model.training
+    model.eval()
+    images_so_far = 0
+    fig = plt.figure()
+
+    with torch.no_grad():
+        for i, (inputs, labels) in enumerate(test_loader):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+
+            for j in range(inputs.size()[0]):
+                images_so_far += 1
+                ax = plt.subplot(num_images//2, 2, images_so_far)
+                ax.axis('off')
+                ax.set_title(f'predicted: {get_class_name(preds[j])}')
+                imshow(inputs.cpu().data[j])
+
+                if images_so_far == num_images:
+                    model.train(mode=was_training)
+                    return
+        model.train(mode=was_training)
 
 
 def get_class_name(label: torch.Tensor) -> str:
@@ -110,23 +252,23 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
     n_image = 0
     print(path)
     print("Loading Images...")
-    for i in tqdm(range(3)):
+    for i in tqdm(range(52)):
         same_label_image_paths = np.array(
             list(Path(f"{path}{i}/").glob("*.jpg")))
         length = len(same_label_image_paths)
         # メモリ足りないから半分にする
         same_label_image_paths = same_label_image_paths[np.random.choice(
-            length, int(length / 3))]
+            length, int(length / 5))]
         same_label_images = [np.array(Image.open(img_path))
                              for img_path in same_label_image_paths]
-        print(f"image: {type(same_label_images[0])}")
-        print(f"image: {same_label_images[0].shape}")
+        # print(f"image: {type(same_label_images[0])}")
+        # print(f"image: {same_label_images[0].shape}")
         n_image += len(same_label_images)
         images.append(same_label_images)
         labels.append([i for _ in range(len(same_label_images))])
 
     print(n_image)
-    images = np.array(images, dtype=object)
+    images = np.array(images)
     images = images.reshape(
         images.shape[0] * images.shape[1], images.shape[2], images.shape[3], images.shape[4])
     print(images.shape)
@@ -193,6 +335,55 @@ class TrumpDataset(Dataset):
 
     def __len__(self) -> int:
         return len(self.data)
+
+
+def check_history():
+    # [[index, train_loss, train_acc, val_loss, val_acc]], len(history) == num_epoch + 1, len(history[0]) == 5
+    history: np.ndarray = pd.read_pickle("history.pkl")
+    plt.plot(history[1:, 0], history[1:, 1], "b", label="train")
+    plt.plot(history[1:, 0], history[1:, 3], "k", label="test")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.title("loss curve")
+    plt.legend()
+    plt.savefig("loss_curve.png")
+    plt.close()
+
+    plt.plot(history[:, 0], history[:, 2], "b", label="train")
+    plt.plot(history[:, 0], history[:, 4], "k", label="test")
+    plt.xlabel("epoch")
+    plt.ylabel("acc")
+    plt.title("accuracy")
+    plt.legend()
+    plt.savefig("acc_curve.png")
+
+    print(f"initial: loss: {history[1, 3]}, acc: {history[1, 4]}")
+    print(f"last: loss: {history[-1, 3]}, acc: {history[-1, 4]}")
+    print(f"eval mode acc: {check_acc()}")
+
+
+def check_acc():
+    net = load_model(device)
+    _, test_loader = get_dataloader(*get_dataset())
+    acc: float = 0.0
+    num_test: int = 0
+    images: torch.Tensor
+    labels: torch.Tensor
+    for images, labels in test_loader:
+        num_test += len(labels)
+        images = images.to(device)
+        labels = labels.to(device)
+        outputs = net(images)
+        _, predicted = torch.max(outputs, 1)
+        acc += (predicted == labels).sum().item()
+    return acc / num_test
+
+
+def load_model() -> nn.Module:
+    model = get_model()
+    model.load_state_dict(torch.load("param.pt"))
+    model.eval()
+    return model
 
 
 if __name__ == "__main__":
