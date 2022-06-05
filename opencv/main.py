@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pyheif
 from PIL import Image
 import sys
+import os
 
 
 def get_script_dir() -> str:
@@ -41,6 +42,8 @@ def main():
 
     # 輪郭検出
     contours = edge_detection(bin_img)
+
+    os.makedirs(f"{get_script_dir()}/../images/cards")
 
     # 直線検出
     for idx, cnt in enumerate(contours):

@@ -124,9 +124,11 @@ def main():
 
     print(device)
     model_ft, history = train_model(train_dataloader, test_dataloader,
-                                    model_ft, criterion, optimizer_ft, exp_lr_scheduler)
+                                    model_ft, criterion, optimizer_ft, exp_lr_scheduler, 35)
     torch.save(model_ft.state_dict(), "param.pt")
     pd.to_pickle(history, "history.pkl")
+
+    check_history()
 
 
 def get_model() -> nn.Module:
@@ -246,7 +248,8 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
 
 def get_dataset() -> Tuple[Dataset, Dataset]:
 
-    path: str = f"{get_script_dir()}/../images/datasets/"
+    # path: str = f"{get_script_dir()}/../images/datasets/"
+    path: str = f"{get_script_dir()}/../images/datasets_desk/"
 
     images = []
     labels = []
@@ -259,7 +262,7 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
         length = len(same_label_image_paths)
         # メモリ足りないから半分にする
         same_label_image_paths = same_label_image_paths[np.random.choice(
-            length, int(length / 15))]
+            length, min(length, 300))]
         same_label_images = [np.array(Image.open(img_path))
                              for img_path in same_label_image_paths]
         # print(f"image: {type(same_label_images[0])}")
@@ -448,6 +451,6 @@ def load_model() -> nn.Module:
 
 
 if __name__ == "__main__":
-    main()
-    # check_history()
+    # main()
+    check_history()
     # check_my_img()

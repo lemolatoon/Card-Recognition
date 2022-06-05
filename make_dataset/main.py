@@ -3,6 +3,7 @@ import cv2
 import os
 import copy
 from tqdm import tqdm
+import sys
 
 
 def get_script_dir() -> str:
@@ -25,9 +26,11 @@ def main():
     cv2.imwrite("fig.png", background)
 
     cards_path: str = f"{get_script_dir()}/../images/cards/"
-    background_path: str = f"{get_script_dir()}/../images/backgrounds/"
-    dataset_path: str = f"{get_script_dir()}/../images/datasets/"
-    try_count: int = 10
+    # background_path: str = f"{get_script_dir()}/../images/backgrounds/"
+    background_path: str = f"{get_script_dir()}/../images/dirty dest/"
+    # dataset_path: str = f"{get_script_dir()}/../images/datasets/"
+    dataset_path: str = f"{get_script_dir()}/../images/datasets_desk/"
+    try_count: int = 1
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{4 + i}.jpg")
@@ -38,6 +41,9 @@ def main():
             for k in range(try_count):  # try affine count
                 converted = random_affine(
                     card, copy.deepcopy(background), resize=True)
+                if converted is None:
+                    k = k + 1
+                    continue
                 # print(f"{dataset_path}{i}/{j * 100 + k}.jpg")
                 cv2.imwrite(
                     f"{dataset_path}{i}/{(j - 1) * try_count + k}.jpg", converted)
@@ -45,8 +51,26 @@ def main():
 
 def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool = False, resize_length: int = 255) -> np.ndarray:
 
+    if background_img is None:
+        return None
     background_img = cv2.resize(background_img, (500, 500))
 
+    # 明度をランダムに変更
+    card_img = cv2.cvtColor(card_img, cv2.COLOR_BGR2HSV)
+    for _ in range(3):
+        h_deg = 0  # 色相
+        s_mag = min(max(np.random.random() * 1.3, 1.1), 0.5)  # 彩度
+        v_mag = max(min(np.random.random() * 0.8, 0.8), 1.1)  # 明度
+        w_choice = np.random.choice(card_img.shape[0], card_img.shape[0] // 7)
+        h_choice = np.random.choice(card_img.shape[1], card_img.shape[1] // 7)
+        card_img[:, h_choice,
+                 (2)] = card_img[:, h_choice, (2)] * v_mag
+        card_img[w_choice, :,
+                 (2)] = card_img[w_choice, :, (2)] * v_mag
+
+    card_img = cv2.cvtColor(card_img, cv2.COLOR_HSV2BGR)
+
+    # 歪ませる
     height = background_img.shape[0]
     width = background_img.shape[1]
 
