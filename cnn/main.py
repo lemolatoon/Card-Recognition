@@ -65,7 +65,7 @@ def train_model(train_loader: DataLoader, test_loader: DataLoader, model: nn.Mod
             train_loss += loss.item()
             train_acc += (predicted == labels).sum().item()
 
-            scheduler.step()
+            # scheduler.step()
 
         inputs_test: torch.Tensor
         labels_test: torch.Tensor
@@ -131,8 +131,8 @@ def main():
 def get_model() -> nn.Module:
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
-    # 53 classify
-    model_ft.fc = ModelHead(num_ftrs, 256, 53)
+    # 52 classify
+    model_ft.fc = ModelHead(num_ftrs, 256, 52)
 
     model_ft.to(device)
     return model_ft
@@ -300,14 +300,14 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
 
     train_transform = transforms.Compose([
         # transforms.RandomResizedCrop(224),
-        transforms.Resize(256),
+        transforms.Resize(128),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
     ])
 
     test_transform = transforms.Compose([
-        transforms.Resize(256),
+        transforms.Resize(128),
         # transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
