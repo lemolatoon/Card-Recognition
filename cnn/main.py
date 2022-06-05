@@ -258,7 +258,7 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
         length = len(same_label_image_paths)
         # メモリ足りないから半分にする
         same_label_image_paths = same_label_image_paths[np.random.choice(
-            length, int(length / 5))]
+            length, int(length / 15))]
         same_label_images = [np.array(Image.open(img_path))
                              for img_path in same_label_image_paths]
         # print(f"image: {type(same_label_images[0])}")
@@ -329,7 +329,7 @@ class TrumpDataset(Dataset):
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         data = self.data[index]
         image = self.transforms(data[0])
-        label = torch.tensor(data[1], dtype=torch.int32)
+        label = torch.tensor(data[1], dtype=torch.int64)
 
         return (image, label)
 
