@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import os
 import copy
+from tqdm import tqdm
 
 
 def get_script_dir() -> str:
@@ -26,38 +27,28 @@ def main():
     cards_path: str = f"{get_script_dir()}/../images/cards/"
     background_path: str = f"{get_script_dir()}/../images/backgrounds/"
     dataset_path: str = f"{get_script_dir()}/../images/datasets/"
-    for i in range(53):
+    try_count: int = 10
+    for i in range(52):
+        os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{4 + i}.jpg")
-        for j in range(1, 400):  # num background
-            print(f"(i, j): {(i, j)}")
+        print(f"[{i}/53]")
+        for j in tqdm(range(1, 400)):  # num background
+            # print(f"(i, j): {(i, j)}")
             background = cv2.imread(f"{background_path}{j:06}.jpg")
-            for k in range(10):  # try affine count
-                converted = random_affine(copy.deepcopy(
-                    card), copy.deepcopy(background))
-                os.makedirs(f"{dataset_path}{i}", exist_ok=True)
-                print(f"{dataset_path}{i}/{j * 100 + k}.jpg")
-                cv2.imwrite(f"{dataset_path}{i}/{j * 100 + k}.jpg", converted)
+            for k in range(try_count):  # try affine count
+                converted = random_affine(
+                    card, copy.deepcopy(background), resize=True)
+                # print(f"{dataset_path}{i}/{j * 100 + k}.jpg")
+                cv2.imwrite(
+                    f"{dataset_path}{i}/{(j - 1) * try_count + k}.jpg", converted)
 
 
-def random_affine(card_img: np.ndarray, background_img: np.ndarray) -> np.ndarray:
-    matrix = np.array(
-        [1 + np.random.random() * 0.005 if i in (0, 4, 8) else np.random.random() * 0.0005 for i in range(9)]).reshape((3, 3))
+def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool = False, resize_length: int = 255) -> np.ndarray:
 
-    src_pts = np.array(
-        [[0, 0], [0, card_img.shape[1]], [card_img.shape[0], 0], [card_img.shape[0], card_img.shape[1]]], dtype=np.float32)
+    background_img = cv2.resize(background_img, (500, 500))
 
-    def gen_x(): return card_img.shape[0] + \
-        card_img.shape[0] * 0.1 * np.random.random() * 20
-
-    def gen_y(): return card_img.shape[1] + \
-        card_img.shape[1] * 0.1 * np.random.random() * 20
-    dst_pts = np.array(
-        [[0, 0], [np.random.random() * 20, gen_y()], [gen_x(), np.random.random() * 20], [gen_x(), gen_y()]], dtype=np.float32)
-    matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
     height = background_img.shape[0]
     width = background_img.shape[1]
-    matrix = matrix * min(height, width) / \
-        max(card_img.shape[0], card_img.shape[1]) * 0.70
 
     z_theta = np.pi * 2 * np.random.random()
     rotate_z = np.array([[np.cos(z_theta), np.sin(z_theta), 0],
@@ -76,23 +67,28 @@ def random_affine(card_img: np.ndarray, background_img: np.ndarray) -> np.ndarra
             card_img.shape[1]) * np.random.random() * 0.8, 1)
     scale = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
     # matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
-    dx = width / 2 + (np.random.random() - 0.5) * width / 5
-    dy = height / 2 + (np.random.random() - 0.5) * height / 5
-    matrix[0][2] = dx
-    matrix[1][2] = dy
 
     # matrix = matrix / \
     # np.linalg.det(matrix) * (0.5 + np.random.random()) * \
     # 0.1 * min(height, width) / \
     # np.sqrt(card_img.shape[0] ** 2 + card_img.shape[1] ** 2)
-    matrix = np.dot(move, np.dot(scale, np.dot(
-        rotate_z, np.dot(rotate_y, rotate_x))))
+    matrix = np.dot(scale, np.dot(
+        rotate_z, np.dot(rotate_y, rotate_x)))
+    determinant = np.linalg.det(matrix)
+    if determinant < 0.5:
+        s = max(1 / determinant * (np.random.random() + 0.5) / 3, 1 / determinant)
+        scale = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
+        matrix = np.dot(scale, matrix)
+    matrix = np.dot(move, matrix)
+
     dsize = (width, height)
 
     dst = cv2.warpPerspective(card_img, matrix, borderMode=cv2.BORDER_TRANSPARENT,
                               dsize=dsize, dst=background_img)
     # dst = cv2.warpPerspective(
     #     card_img, matrix, flags=cv2.INTER_CUBIC, dsize=(size, size))
+    if resize:
+        dst = cv2.resize(dst, (resize_length, resize_length))
     return dst
 
 

@@ -19,10 +19,10 @@ def main():
     name: str = "IMG_5492.HEIC"
     path = f"{get_script_dir()}/../images/{name}"
     # HEICファイル形式の場合はこれを呼ぶ
-    # img = heic2png(path)
+    img = heic2png(path)
     name: str = "cards.png"
     # bgr format
-    img: np.ndarray = cv2.imread(f"{get_script_dir()}/../images/{name}")
+    # img: np.ndarray = cv2.imread(f"{get_script_dir()}/../images/{name}")
     print(type(img))
     print(img.shape)
     # rgb format
@@ -35,7 +35,7 @@ def main():
     plt.imshow(img_gray)
     plt.savefig("fig.png")
 
-    ret, bin_img = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY)
+    ret, bin_img = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY)
     plt.imshow(bin_img)
     plt.savefig("fig.png")
 
@@ -65,14 +65,14 @@ def main():
         print(img.shape)
         # 輪郭の四角形ごとにcard変数に保存し、画像としてwrite
         card: np.ndarray = img[x_1:x_2, y_1:y_2, :]
-        cv2.imwrite(f"{get_script_dir()}/../images/cards/{idx}.jpg", card)
+        # cv2.imwrite(f"{get_script_dir()}/../images/cards/{idx}.jpg", card)
         # 4 + 13 * 0 ~ 4 + 13 * 1 - 1 -> スペード K ~ A
         # 4 + 13 * 1 ~ 4 + 13 * 2 - 1 -> ハート K ~ A
         # 4 + 13 * 2 ~ 4 + 13 * 3 - 1 -> ダイヤ K ~ A
         # 4 + 13 * 3 ~ 4 + 13 * 4 - 1 -> クラブ K ~ A
 
     # 輪郭描画
-    # cv2.drawContours(img, contours, -1, color=(0, 0, 255), thickness=2)
+    cv2.drawContours(img, contours, -1, color=(0, 0, 255), thickness=2)
     plt.xticks([])
     plt.yticks([])
     plt.imshow(img_rbg)
