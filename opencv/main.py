@@ -19,10 +19,10 @@ def main():
     name: str = "IMG_5492.HEIC"
     path = f"{get_script_dir()}/../images/{name}"
     # HEICファイル形式の場合はこれを呼ぶ
-    img = heic2png(path)
+    # img = heic2png(path)
     name: str = "cards.png"
     # bgr format
-    # img: np.ndarray = cv2.imread(f"{get_script_dir()}/../images/{name}")
+    img: np.ndarray = cv2.imread(f"{get_script_dir()}/../images/{name}")
     print(type(img))
     print(img.shape)
     # rgb format
@@ -46,7 +46,7 @@ def main():
     for idx, cnt in enumerate(contours):
         approx: np.ndarray = cv2.approxPolyDP(
             cnt, 0.01 * cv2.arcLength(cnt, True), True)
-        print(approx)
+        # print(approx)
         # print(approx.shape)
         # print(type(approx))
         if approx.size != 8:
@@ -54,15 +54,15 @@ def main():
             continue
         # cv2.drawContours(img, [approx], -1, color=(0, 0, 255), thickness=2)
 
-        print(approx.shape)
+        # print(approx.shape)
         approx = approx[:, 0, :]
-        print(approx.shape)
+        # print(approx.shape)
         y_1 = min(approx[0][0], approx[1][0])  # left up
         y_2 = max(approx[2][0], approx[3][0])  # left down
         x_1 = min(approx[0][1], approx[1][1])  # right up
         x_2 = max(approx[2][1], approx[3][1])  # right down
-        print(f"x_1: {x_1}, x_2: {x_2}, y_1: {y_1}, y_1, {y_2}")
-        print(img.shape)
+        # print(f"x_1: {x_1}, x_2: {x_2}, y_1: {y_1}, y_1, {y_2}")
+        # print(img.shape)
         # 輪郭の四角形ごとにcard変数に保存し、画像としてwrite
         card: np.ndarray = img[x_1:x_2, y_1:y_2, :]
         # cv2.imwrite(f"{get_script_dir()}/../images/cards/{idx}.jpg", card)
