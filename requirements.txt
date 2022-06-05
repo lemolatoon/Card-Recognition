@@ -7,3 +7,4 @@ pyheif
 pillow
 tqdm
 icrawler
+pandas

@@ -17,6 +17,7 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 import torchvision.models as models
 import pandas as pd
+import pyheif
 
 
 def get_script_dir() -> str:
@@ -152,7 +153,7 @@ class ModelHead(nn.Module):
         return x
 
 
-def visualize_model(test_loader, model, num_images=6):
+def visualize_model(test_loader, model: nn.Module, num_images=6):
     was_training = model.training
     model.eval()
     images_so_far = 0
@@ -361,10 +362,14 @@ def check_history():
     print(f"last: loss: {history[-1, 3]}, acc: {history[-1, 4]}")
     print(f"eval mode acc: {check_acc()}")
 
+    model = load_model()
+    _, test_loader = get_dataloader()
+    visualize_model(test_loader, model)
+
 
 def check_acc():
-    net = load_model(device)
-    _, test_loader = get_dataloader(*get_dataset())
+    net = load_model()
+    _, test_loader = get_dataloader()
     acc: float = 0.0
     num_test: int = 0
     images: torch.Tensor
@@ -379,6 +384,62 @@ def check_acc():
     return acc / num_test
 
 
+def check_my_img():
+    model = load_model()
+    path = f"{get_script_dir()}/../images/competition_sample"
+    same_label_image_paths = np.array(
+        list(Path(f"{path}").glob("*.HEIC")))
+    images = []
+    for heic_file in same_label_image_paths:
+        # HEICファイル形式の場合はこれを呼ぶ
+        images.append(heic2png(heic_file))
+    num_images = len(images)
+
+    test_transform = transforms.Compose([
+        transforms.Resize(128),
+        transforms.CenterCrop(128),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
+    ])
+
+    inputs = [test_transform(img) for img in images]
+    inputs = torch.stack(inputs)
+
+    was_training = model.training
+    model.eval()
+    images_so_far = 0
+    fig = plt.figure()
+    with torch.no_grad():
+        inputs = inputs.to(device)
+
+        outputs = model(inputs)
+        _, preds = torch.max(outputs, 1)
+
+        for j in range(inputs.size()[0]):
+            images_so_far += 1
+            ax = plt.subplot(num_images//2, 2, images_so_far)
+            ax.axis('off')
+            ax.set_title(f'predicted: {get_class_name(preds[j])}')
+            imshow(inputs.cpu().data[j])
+
+            if images_so_far == num_images:
+                model.train(mode=was_training)
+                return
+
+
+def heic2png(img_path: str) -> np.ndarray:
+    heif_file = pyheif.read(img_path)
+    data = Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
+    return data
+
+
 def load_model() -> nn.Module:
     model = get_model()
     model.load_state_dict(torch.load("param.pt"))
@@ -388,3 +449,5 @@ def load_model() -> nn.Module:
 
 if __name__ == "__main__":
     main()
+    # check_history()
+    # check_my_img()

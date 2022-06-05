@@ -2,3 +2,5 @@ images/
 *.png
 *.jpg
 *.HEIC
+*.pt
+*.pkl
