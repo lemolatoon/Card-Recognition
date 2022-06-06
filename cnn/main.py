@@ -215,6 +215,42 @@ def get_class_name(label: torch.Tensor) -> str:
     return class_name
 
 
+def class2label(class_name: str) -> int:
+    # e.g) 3A*.jpg
+
+    def shape2num(sh):
+        if sh == "S":
+            return 0
+        elif sh == "H":
+            return 1
+        elif sh == "D":
+            return 2
+        elif sh == "C":
+            return 3
+
+    def num_str2num(num: str) -> int:
+        if num == "A":
+            return 12
+        elif num == "J":
+            return 2
+        elif num == "Q":
+            return 1
+        elif num == "K":
+            return 0
+        else:
+            return int(num)
+    card_shape: str
+    card_num: int
+    if class_name[0] in list(zip(["A", "J", "Q", "K"], range(2, 10))):
+        card_shape = shape2num(class_name[1])
+        card_num = num_str2num(class_name[0])
+    else:  # 10
+        card_shape = shape2num(class_name[2])
+        card_num = num_str2num(class_name[:2])
+
+    return card_shape * 13 + card_num
+
+
 def imshow(inp, title=None):
     """Imshow for Tensor."""
     inp = inp.numpy().transpose((1, 2, 0))
@@ -246,8 +282,7 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
     return (train_dataloader, test_dataloader)
 
 
-def get_dataset() -> Tuple[Dataset, Dataset]:
-
+def load_images() -> np.ndarray:  # (*, 2)
     # path: str = f"{get_script_dir()}/../images/datasets/"
     path: str = f"{get_script_dir()}/../images/datasets_desk/"
 
@@ -286,6 +321,29 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
     print(type(labels[0]))
     # data = np.stack([images, labels], -1)
     data = np.array([(image, label) for image, label in zip(images, labels)])
+    return data
+
+
+def load_images2() -> np.ndarray:
+    numbers = list(["A"], range(3, 11), ["J", "Q", "K"])
+    shapes = ["S", "H", "D", "C"]
+    path = f"{get_script_dir()}/../images/kaggle/Images/Images/"
+    data = []
+    for number in numbers:
+        for shape in shapes:
+            print(f"{number}{shape}*.jpg")
+            paths = Path(path).glob(f"{number}{shape}*.jpg")
+            for path in paths:
+                print(str(path))
+                data.append(
+                    (Image.open(str(path)), class2label(f"{number}{shape}")))
+    return np.array(data)
+
+
+def get_dataset() -> Tuple[Dataset, Dataset]:
+
+    data = load_images2()
+    print(data.shape)
 
     # randomize
     print("Shuffling data...")
@@ -451,6 +509,6 @@ def load_model() -> nn.Module:
 
 
 if __name__ == "__main__":
-    # main()
-    check_history()
+    main()
+    # check_history()
     # check_my_img()
