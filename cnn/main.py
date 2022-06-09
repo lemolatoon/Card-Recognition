@@ -283,8 +283,9 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
 
 
 def load_images() -> np.ndarray:  # (*, 2)
+    dir_name = "nintendo_desk"
     # path: str = f"{get_script_dir()}/../images/datasets/"
-    path: str = f"{get_script_dir()}/../images/datasets_desk/"
+    path: str = f"{get_script_dir()}/../images/{dir_name}/"
 
     images = []
     labels = []
@@ -342,7 +343,7 @@ def load_images2() -> np.ndarray:
 
 def get_dataset() -> Tuple[Dataset, Dataset]:
 
-    data = load_images2()
+    data = load_images()
     print(data.shape)
 
     # randomize
@@ -509,6 +510,6 @@ def load_model() -> nn.Module:
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     # check_history()
-    # check_my_img()
+    check_my_img()

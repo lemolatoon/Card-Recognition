@@ -8,3 +8,5 @@ pillow
 tqdm
 icrawler
 pandas
+PyPDF2
+pdf2image
