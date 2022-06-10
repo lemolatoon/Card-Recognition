@@ -283,7 +283,8 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
 
 
 def load_images() -> np.ndarray:  # (*, 2)
-    dir_name = "nintendo_desk"
+    # dir_name = "nintendo_desk"
+    dir_name = "floor"
     # path: str = f"{get_script_dir()}/../images/datasets/"
     path: str = f"{get_script_dir()}/../images/{dir_name}/"
 
@@ -298,7 +299,7 @@ def load_images() -> np.ndarray:  # (*, 2)
         length = len(same_label_image_paths)
         # メモリ足りないから半分にする
         same_label_image_paths = same_label_image_paths[np.random.choice(
-            length, min(length, 300))]
+            length, min(length, 1500))]
         same_label_images = [np.array(Image.open(img_path))
                              for img_path in same_label_image_paths]
         # print(f"image: {type(same_label_images[0])}")
@@ -511,5 +512,5 @@ def load_model() -> nn.Module:
 
 if __name__ == "__main__":
     # main()
-    # check_history()
+    check_history()
     check_my_img()

@@ -11,10 +11,10 @@ def get_script_dir() -> str:
 
 
 def main():
-    word: str = "dirty dest"
+    word: str = "floor"
     crawler = BingImageCrawler(
         storage={"root_dir": f"{get_script_dir()}/../images/{word}"})
-    crawler.crawl(keyword=word, max_num=10000)
+    crawler.crawl(keyword=word, max_num=2000)
 
 
 if __name__ == "__main__":

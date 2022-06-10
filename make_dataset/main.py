@@ -16,24 +16,18 @@ def get_script_dir() -> str:
 
 
 def main():
-    # test
-    card = cv2.imread(f"{get_script_dir()}/../images/cards/15.jpg")
-    background = cv2.imread(
-        f"{get_script_dir()}/../images/backgrounds/000002.jpg")
-    affined = random_affine(card, background)
-    cv2.imwrite("fig.png", background)
-    cv2.imwrite("fig.png", affined)
-    cv2.imwrite("fig.png", background)
 
     # cards_path: str = f"{get_script_dir()}/../images/cards/"
     cards_path: str = f"{get_script_dir()}/../pdf2img/img/"
     # background_path: str = f"{get_script_dir()}/../images/backgrounds/"
-    background_path: str = f"{get_script_dir()}/../images/dirty dest/"
-    dir_name = "nintendo_desk"
+    background_word: str = "floor"
+    background_path: str = f"{get_script_dir()}/../images/{background_word}/"
+    print(background_path)
+    dir_name = background_word
     # dataset_path: str = f"{get_script_dir()}/../images/datasets/"
     # dataset_path: str = f"{get_script_dir()}/../images/datasets_desk/"
     dataset_path: str = f"{get_script_dir()}/../images/{dir_name}/"
-    try_count: int = 1
+    try_count: int = 6
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{i}.jpg")
