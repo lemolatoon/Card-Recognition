@@ -26,7 +26,7 @@ def main():
     dir_name = background_word
     # dataset_path: str = f"{get_script_dir()}/../images/datasets/"
     # dataset_path: str = f"{get_script_dir()}/../images/datasets_desk/"
-    dataset_path: str = f"{get_script_dir()}/../images/{dir_name}/"
+    dataset_path: str = f"{get_script_dir()}/../images/datasets/{dir_name}/"
     try_count: int = 6
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)

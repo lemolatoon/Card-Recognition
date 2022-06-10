@@ -18,6 +18,7 @@ from torch.optim import lr_scheduler
 import torchvision.models as models
 import pandas as pd
 import pyheif
+import cv2
 
 
 def get_script_dir() -> str:
@@ -286,7 +287,7 @@ def load_images() -> np.ndarray:  # (*, 2)
     # dir_name = "nintendo_desk"
     dir_name = "floor"
     # path: str = f"{get_script_dir()}/../images/datasets/"
-    path: str = f"{get_script_dir()}/../images/{dir_name}/"
+    path: str = f"{get_script_dir()}/../images/datasets/{dir_name}/"
 
     images = []
     labels = []
@@ -451,11 +452,14 @@ def check_my_img():
     model = load_model()
     path = f"{get_script_dir()}/../images/competition_sample"
     same_label_image_paths = np.array(
-        list(Path(f"{path}").glob("*.HEIC")))
+        list(Path(f"{path}").glob("*")))
     images = []
     for heic_file in same_label_image_paths:
         # HEICファイル形式の場合はこれを呼ぶ
-        images.append(heic2png(heic_file))
+        if "HEIC" in str(heic_file):
+            images.append(heic2png(heic_file))
+        else:
+            images.append(heic2png(heic_file))
     num_images = len(images)
 
     test_transform = transforms.Compose([
@@ -480,7 +484,7 @@ def check_my_img():
 
         for j in range(inputs.size()[0]):
             images_so_far += 1
-            ax = plt.subplot(num_images//2, 2, images_so_far)
+            ax = plt.subplot(num_images//2 + 1, 2, images_so_far)
             ax.axis('off')
             ax.set_title(f'predicted: {get_class_name(preds[j])}')
             imshow(inputs.cpu().data[j])
@@ -511,6 +515,6 @@ def load_model() -> nn.Module:
 
 
 if __name__ == "__main__":
-    # main()
-    check_history()
-    check_my_img()
+    main()
+    # check_history()
+    # check_my_img()
