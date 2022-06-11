@@ -14,7 +14,7 @@ def main():
     word: str = "floor"
     crawler = BingImageCrawler(
         storage={"root_dir": f"{get_script_dir()}/../images/{word}"})
-    crawler.crawl(keyword=word, max_num=2000)
+    crawler.crawl(keyword=word, max_num=10000)
 
 
 if __name__ == "__main__":

@@ -118,14 +118,14 @@ def main():
     model_ft = get_model()
     criterion = nn.CrossEntropyLoss()
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
 
     exp_lr_scheduler = lr_scheduler.StepLR(
         optimizer_ft, step_size=7, gamma=0.1)
 
     print(device)
     model_ft, history = train_model(train_dataloader, test_dataloader,
-                                    model_ft, criterion, optimizer_ft, exp_lr_scheduler, 35)
+                                    model_ft, criterion, optimizer_ft, exp_lr_scheduler, 25)
     torch.save(model_ft.state_dict(), "param.pt")
     pd.to_pickle(history, "history.pkl")
 
@@ -133,14 +133,21 @@ def main():
 
 
 def get_model() -> nn.Module:
-    model_ft = models.resnet18(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
-    # 52 classify
-    model_ft.fc = ModelHead(num_ftrs, 256, 52)
+    # model_ft = models.resnet18(pretrained=True)
+    convnext = models.convnext_base(pretrained=True)
 
-    model_ft.to(device)
-    return model_ft
 
+#     num_ftrs = model_ft.fc.in_features
+#     # 52 classify
+#     model_ft.fc = ModelHead(num_ftrs, 256, 52)
+# 
+#     model_ft.to(device)
+#     return model_ft
+
+    fc = list(convnext.classifier.children())[-1]
+    fc = nn.Linear(fc.in_features, 52)
+    convnext.to(device)
+    return convnext
 
 class ModelHead(nn.Module):
     def __init__(self, num_input: int, num_hidden: int, num_output: int):
@@ -266,6 +273,7 @@ def imshow(inp, title=None):
 
 
 def get_dataloader() -> Tuple[DataLoader, DataLoader]:
+    # train_dataset, test_dataset = get_dataset_with_io()
     train_dataset, test_dataset = get_dataset()
 
     print("Making Train DataLoader...")
@@ -285,7 +293,7 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
 
 def load_images() -> np.ndarray:  # (*, 2)
     # dir_name = "nintendo_desk"
-    dir_name = "floor"
+    dir_name = "root"
     # path: str = f"{get_script_dir()}/../images/datasets/"
     path: str = f"{get_script_dir()}/../images/datasets/{dir_name}/"
 
@@ -299,8 +307,7 @@ def load_images() -> np.ndarray:  # (*, 2)
             list(Path(f"{path}{i}/").glob("*.jpg")))
         length = len(same_label_image_paths)
         # メモリ足りないから半分にする
-        same_label_image_paths = same_label_image_paths[np.random.choice(
-            length, min(length, 1500))]
+        same_label_image_paths = same_label_image_paths[np.random.choice(length, min(length, 900))]
         same_label_images = [np.array(Image.open(img_path))
                              for img_path in same_label_image_paths]
         # print(f"image: {type(same_label_images[0])}")
@@ -311,6 +318,7 @@ def load_images() -> np.ndarray:  # (*, 2)
 
     print(n_image)
     images = np.array(images)
+    print(images.shape)
     images = images.reshape(
         images.shape[0] * images.shape[1], images.shape[2], images.shape[3], images.shape[4])
     print(images.shape)
@@ -357,14 +365,15 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
     # split
     print("Splitting train test data...")
     n_data = data.shape[0]
-    train_data = data[:int(n_data * 0.8)]
-    test_data = data[int(n_data * 0.8):]
+    split_rate = 0.9
+    train_data = data[:int(n_data * split_rate)]
+    test_data = data[int(n_data * 0.9):]
 
     print(f"train_data.shape: {train_data.shape}")
     print(f"test_data.shape: {test_data.shape}")
 
     train_transform = transforms.Compose([
-        # transforms.RandomResizedCrop(224),
+        transforms.RandomResizedCrop(224),
         transforms.Resize(128),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -382,7 +391,96 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
     train_dataset = TrumpDataset(train_data, train_transform)
     test_dataset = TrumpDataset(test_data, test_transform)
 
+
     return (train_dataset, test_dataset)
+
+def get_dataset_with_io() -> Tuple[Dataset, Dataset]:
+
+    train_transform = transforms.Compose([
+        # transforms.RandomResizedCrop(224),
+        transforms.Resize(128),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
+    ])
+
+    test_transform = transforms.Compose([
+        transforms.Resize(128),
+        # transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
+    ])
+
+    print("Making Dataset...")
+
+    dir_name = "root"
+    path: str = f"{get_script_dir()}/../images/datasets/{dir_name}"
+    datasize = 2393 * 52
+    train_dataset = TrumpDatasetWithIO(path, train_transform, True, datasize)
+    test_dataset = TrumpDatasetWithIO(path, test_transform, False, datasize)
+
+    return (train_dataset, test_dataset)
+
+def get_imagefolder():
+    print("Making Dataset...")
+    dir_name = "root"
+    path: str = f"{get_script_dir()}/../images/datasets/{dir_name}"
+    train_transform = transforms.Compose([
+        # transforms.RandomResizedCrop(224),
+        transforms.Resize(128),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
+    ])
+
+    test_transform = transforms.Compose([
+        transforms.Resize(128),
+        # transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.299, 0.224, 0.225])
+    ])
+
+    image_folder = ImageFolderDataset(path, transform=transforms.Compose([]))
+    n = int(len(image_folder))
+    n_test = int(0.1 * n)
+    test_set = torch.utils.data.Subset(image_folder, range(n_test))
+    train_set = torch.utils.data.Subset(image_folder, range(n_test, n))
+    train_set = JustTransformDataset(train_set, train_transform)
+    test_set = JustTransformDataset(test_set, test_transform)
+
+    return train_set, test_set
+
+class JustTransformDataset(Dataset):
+    def __init__(self, dataset, transform):
+        super().__init__()
+        self.dataset = dataset
+        self.transform = transform
+
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        image, label = self.dataset[index]
+        image = self.transform(image)
+        return (image, label)
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+class ImageFolderDataset(Dataset):
+    def __init__(self, path: str, transform):
+        super().__init__()
+        self.image_folder = torchvision.datasets.ImageFolder(path, transform=transform)
+        print(f"ImageFolder length: {len(self)}")
+
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        image, label = self.image_folder[index]
+        label = [int(k) for k, v in self.image_folder.class_to_idx.items() if v == label][0]
+        label = torch.tensor(label, dtype=torch.int64)
+
+        return (image, label)
+
+    def __len__(self) -> int:
+        return len(self.image_folder)
 
 
 class TrumpDataset(Dataset):
@@ -401,6 +499,40 @@ class TrumpDataset(Dataset):
     def __len__(self) -> int:
         return len(self.data)
 
+class TrumpDatasetWithIO(Dataset):
+    def __init__(self: TrumpDataset, path: torch.Tensor, transforms, train: bool, data_size: int, classify: int=52) -> None:
+        super().__init__()
+        self.transforms = transforms
+        self.path = path
+        self.data_size = data_size
+        self.classify = classify
+        self.data_size_per_class = int(data_size / classify)
+        self.pathes = [list(Path(f"{path}/{i}").glob("*.jpg")) for i in range(classify)]
+        self.train = train
+
+        self.cache = dict((idx, None) for idx in range(len(self)))
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        label: int = index // self.data_size_per_class
+        path = self.pathes[label]
+        label = torch.tensor(label, dtype=torch.int64) # label ready
+        inclass_index = index - label * self.data_size_per_class
+        if not self.train:
+            inclass_index += int(0.8 * self.data_size_per_class)
+
+        if self.cache[index] is not None:
+            img = self.cache[idx]
+        else:
+            img = Image.open(f"{path[inclass_index]}")
+        img = self.transforms(img)
+
+        return (img, label)
+
+    def __len__(self) -> int:
+        if self.train:
+            return int(self.data_size * 0.8) - self.classify
+        else:
+            return int(self.data_size * 0.2) - self.classify
 
 def check_history():
     # [[index, train_loss, train_acc, val_loss, val_acc]], len(history) == num_epoch + 1, len(history[0]) == 5

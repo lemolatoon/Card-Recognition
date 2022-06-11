@@ -10,7 +10,7 @@ datasets:
 	python3 make_dataset/main.py
 
 background:
-	python3 background/desk.py
+	python3 background/main.py
 
 train:
 	python3 cnn/main.py

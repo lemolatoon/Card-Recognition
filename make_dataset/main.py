@@ -4,6 +4,7 @@ import os
 import copy
 from tqdm import tqdm
 import sys
+from pathlib import Path
 
 
 def get_script_dir() -> str:
@@ -20,21 +21,24 @@ def main():
     # cards_path: str = f"{get_script_dir()}/../images/cards/"
     cards_path: str = f"{get_script_dir()}/../pdf2img/img/"
     # background_path: str = f"{get_script_dir()}/../images/backgrounds/"
-    background_word: str = "floor"
-    background_path: str = f"{get_script_dir()}/../images/{background_word}/"
+    background_word: str = "root"
+    background_path: str = f"{get_script_dir()}/../images/background/{background_word}/"
+    img_pathes = np.array(list(Path(background_path).glob("*.jpg")))
+    img_pathes = img_pathes[np.random.choice(img_pathes.shape[0], 1500)]
+    print(img_pathes.shape)
     print(background_path)
     dir_name = background_word
     # dataset_path: str = f"{get_script_dir()}/../images/datasets/"
     # dataset_path: str = f"{get_script_dir()}/../images/datasets_desk/"
     dataset_path: str = f"{get_script_dir()}/../images/datasets/{dir_name}/"
-    try_count: int = 6
+    try_count: int = 1
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{i}.jpg")
         print(f"[{i}/53]")
-        for j in tqdm(range(1, 400)):  # num background
+        for j, img_path in enumerate(tqdm(img_pathes)):  # num background
             # print(f"(i, j): {(i, j)}")
-            background = cv2.imread(f"{background_path}{j:06}.jpg")
+            background = cv2.imread(str(img_path))
             for k in range(try_count):  # try affine count
                 converted = random_affine(
                     card, copy.deepcopy(background), resize=True)
