@@ -29,10 +29,18 @@ fn make_datasets() -> Result<(), opencv::Error> {
     let abs_cards_img_path = get_absolute_path(Path::new(CARDS_IMG_PATH));
     let abs_data_out_path = get_absolute_path(Path::new(DATASETS_OUT_PATH));
 
-    let back_file_iter = FilePathIterator::new(abs_back_img_path).unwrap();
+    let back_file_iter = FilePathIterator::new(abs_back_img_path.clone()).unwrap();
 
-    for back_filename in back_file_iter {
-        let img = imgcodecs::imread(&back_filename, imgcodecs::IMREAD_COLOR)?;
+    for pathbuf in back_file_iter {
+        let filename = pathbuf.to_str();
+        let filename = match filename {
+            Some(file_str) => file_str,
+            None => {
+                println!("{} is not valid for Rust's Path", pathbuf.to_string_lossy());
+                continue;
+            }
+        };
+        let img = imgcodecs::imread(filename, imgcodecs::IMREAD_COLOR)?;
         println!("{:?}", img.cols());
         println!("{:?}", img.col(0).map(|mat| mat.row(0)));
         println!("{:?}", img.rows());
@@ -62,13 +70,12 @@ impl FilePathIterator {
 }
 
 impl Iterator for FilePathIterator {
-    type Item = String;
+    type Item = PathBuf;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Ok(entry) = self.pathbuf_iter.next()? {
+        while let Ok(entry) = self.pathbuf_iter.next()? {
             let pathbuf = entry.path();
-            let filename = pathbuf.as_path().to_str()?;
-            return Some(filename.to_string());
+            return Some(pathbuf);
         }
         return None;
     }
