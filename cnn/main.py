@@ -140,7 +140,7 @@ def get_model() -> nn.Module:
 #     num_ftrs = model_ft.fc.in_features
 #     # 52 classify
 #     model_ft.fc = ModelHead(num_ftrs, 256, 52)
-# 
+#
 #     model_ft.to(device)
 #     return model_ft
 
@@ -148,6 +148,7 @@ def get_model() -> nn.Module:
     fc = nn.Linear(fc.in_features, 52)
     convnext.to(device)
     return convnext
+
 
 class ModelHead(nn.Module):
     def __init__(self, num_input: int, num_hidden: int, num_output: int):
@@ -179,7 +180,7 @@ def visualize_model(test_loader, model: nn.Module, num_images=6):
 
             for j in range(inputs.size()[0]):
                 images_so_far += 1
-                ax = plt.subplot(num_images//2, 2, images_so_far)
+                ax = plt.subplot(num_images // 2, 2, images_so_far)
                 ax.axis('off')
                 ax.set_title(f'predicted: {get_class_name(preds[j])}')
                 imshow(inputs.cpu().data[j])
@@ -391,8 +392,8 @@ def get_dataset() -> Tuple[Dataset, Dataset]:
     train_dataset = TrumpDataset(train_data, train_transform)
     test_dataset = TrumpDataset(test_data, test_transform)
 
-
     return (train_dataset, test_dataset)
+
 
 def get_dataset_with_io() -> Tuple[Dataset, Dataset]:
 
@@ -420,6 +421,7 @@ def get_dataset_with_io() -> Tuple[Dataset, Dataset]:
     test_dataset = TrumpDatasetWithIO(path, test_transform, False, datasize)
 
     return (train_dataset, test_dataset)
+
 
 def get_imagefolder():
     print("Making Dataset...")
@@ -450,12 +452,12 @@ def get_imagefolder():
 
     return train_set, test_set
 
+
 class JustTransformDataset(Dataset):
     def __init__(self, dataset, transform):
         super().__init__()
         self.dataset = dataset
         self.transform = transform
-
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image, label = self.dataset[index]
@@ -465,12 +467,12 @@ class JustTransformDataset(Dataset):
     def __len__(self) -> int:
         return len(self.dataset)
 
+
 class ImageFolderDataset(Dataset):
     def __init__(self, path: str, transform):
         super().__init__()
         self.image_folder = torchvision.datasets.ImageFolder(path, transform=transform)
         print(f"ImageFolder length: {len(self)}")
-
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         image, label = self.image_folder[index]
@@ -499,8 +501,9 @@ class TrumpDataset(Dataset):
     def __len__(self) -> int:
         return len(self.data)
 
+
 class TrumpDatasetWithIO(Dataset):
-    def __init__(self: TrumpDataset, path: torch.Tensor, transforms, train: bool, data_size: int, classify: int=52) -> None:
+    def __init__(self: TrumpDataset, path: torch.Tensor, transforms, train: bool, data_size: int, classify: int = 52) -> None:
         super().__init__()
         self.transforms = transforms
         self.path = path
@@ -515,7 +518,7 @@ class TrumpDatasetWithIO(Dataset):
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         label: int = index // self.data_size_per_class
         path = self.pathes[label]
-        label = torch.tensor(label, dtype=torch.int64) # label ready
+        label = torch.tensor(label, dtype=torch.int64)  # label ready
         inclass_index = index - label * self.data_size_per_class
         if not self.train:
             inclass_index += int(0.8 * self.data_size_per_class)
@@ -533,6 +536,7 @@ class TrumpDatasetWithIO(Dataset):
             return int(self.data_size * 0.8) - self.classify
         else:
             return int(self.data_size * 0.2) - self.classify
+
 
 def check_history():
     # [[index, train_loss, train_acc, val_loss, val_acc]], len(history) == num_epoch + 1, len(history[0]) == 5
@@ -616,7 +620,7 @@ def check_my_img():
 
         for j in range(inputs.size()[0]):
             images_so_far += 1
-            ax = plt.subplot(num_images//2 + 1, 2, images_so_far)
+            ax = plt.subplot(num_images // 2 + 1, 2, images_so_far)
             ax.axis('off')
             ax.set_title(f'predicted: {get_class_name(preds[j])}')
             imshow(inputs.cpu().data[j])
@@ -626,7 +630,7 @@ def check_my_img():
                 return
 
 
-def heic2png(img_path: str) -> np.ndarray:
+def heic2png(img_path: str) -> Image:
     heif_file = pyheif.read(img_path)
     data = Image.frombytes(
         heif_file.mode,

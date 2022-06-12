@@ -1,8 +1,15 @@
 {
     "python.analysis.extraPaths": [
-        "/root/.local/share/virtualenvs/card-recognition-ZFT0t9hC/lib/python3.8/site-packages"
+        "/home/ubuntu/.local/share/virtualenvs/Card-Recognition-_0t22FVl/lib/python3.7/site-packages"
     ],
     "python.autoComplete.extraPaths": [
-        "/root/.local/share/virtualenvs/card-recognition-ZFT0t9hC/lib/python3.8/site-packages"
+        "/home/ubuntu/.local/share/virtualenvs/Card-Recognition-_0t22FVl/lib/python3.7/site-packages"
+    ],
+    "python.formatting.autopep8Path": "/home/ubuntu/.local/share/virtualenvs/Card-Recognition-_0t22FVl/bin/autopep8",
+    "python.formatting.autopep8Args": [
+        "--ignore",
+        "E70",
+        "--max-line-length",
+        "120"
     ]
 }

@@ -35,7 +35,7 @@ def main():
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{i}.jpg")
-        print(f"[{i}/53]")
+        print(f"[{i+1}/53]")
         for j, img_path in enumerate(tqdm(img_pathes)):  # num background
             # print(f"(i, j): {(i, j)}")
             background = cv2.imread(str(img_path))
@@ -57,8 +57,7 @@ def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool
     background_img = cv2.resize(background_img, (500, 500))
 
     # reshape
-    rate = background_img.shape[0] / \
-        (3 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
+    rate = background_img.shape[0] / (3.5 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
     dsize = (int(card_img.shape[1] * rate), int(card_img.shape[0] * rate))
     card_img = cv2.resize(card_img, dsize)
     cv2.imwrite("fig.png", card_img)
@@ -66,7 +65,7 @@ def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool
 
     # 明度をランダムに変更
     card_img = cv2.cvtColor(card_img, cv2.COLOR_BGR2HSV)
-    v_mag = 0.5 + np.random.random()
+    v_mag = 0.7 + np.random.random()
     card_img[:, :, (2)] = card_img[:, :, (2)] * v_mag
     # for _ in range(3):
     #     h_deg = 0  # 色相
