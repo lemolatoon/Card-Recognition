@@ -51,13 +51,15 @@ def main():
 
 
 def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool = False, resize_length: int = 255) -> np.ndarray:
-
+    simbol_pos = [(),(),(),()]
     if background_img is None:
         return None
     background_img = cv2.resize(background_img, (500, 500))
 
     # reshape
     rate = background_img.shape[0] / (3.5 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
+
+    #トランプの画像のサイズ？
     dsize = (int(card_img.shape[1] * rate), int(card_img.shape[0] * rate))
     card_img = cv2.resize(card_img, dsize)
     cv2.imwrite("fig.png", card_img)
