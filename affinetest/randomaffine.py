@@ -36,8 +36,7 @@ def main():
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{i}.jpg")
         print(f"[{i+1}/53]")
-        img_path = "{get_script_dir()}/../images/background/{background_word}/001988.png"
-        print(img_path)
+        img_path = "/mnt/c/Users/yutac/Documents/GitHub/Card-Recognition/images/background/root/001988.jpg"
         # print(f"(i, j): {(i, j)}")
         background = cv2.imread(str(img_path))
         converted = random_affine(
@@ -59,7 +58,7 @@ def random_affine(card_img: np.ndarray, background_img: np.ndarray, ite:int,resi
     #トランプの画像のサイズ？
     dsize = (int(card_img.shape[1] * rate), int(card_img.shape[0] * rate))
     card_img = cv2.resize(card_img, dsize)
-    cv2.imwrite(f"fig{ite}.png", card_img)
+    cv2.imwrite(f"affinetest/fig{ite}.png", card_img)
     # sys.exit(0)
 
 if __name__ == "__main__":
