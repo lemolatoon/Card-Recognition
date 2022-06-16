@@ -3,7 +3,7 @@ from pathlib import Path
 import pdf2image
 import PyPDF2
 import os
-import sys
+import cv2
 
 
 def get_script_dir() -> str:
@@ -20,7 +20,8 @@ def main():
     path_25_49 = f"{get_script_dir()}/pdf/25-49.pdf"
     path_50_51 = f"{get_script_dir()}/pdf/50-51.pdf"
 
-    path_tmp = f"{get_script_dir()}/tmp"
+    path_tmp_pdf = f"{get_script_dir()}/tmp_pdf"
+    path_tmp_jpg = f"{get_script_dir()}/tmp_jpg"
     path_img = f"{get_script_dir()}/img"
 
     def rm_dirs(path: str):
@@ -32,10 +33,12 @@ def main():
         if Path(path).is_dir():
             os.rmdir(path)
     rm_dirs(path_img)
-    os.makedirs(path_tmp, exist_ok=True)
+    os.makedirs(path_tmp_pdf, exist_ok=True)
+    os.makedirs(path_tmp_jpg, exist_ok=True)
     os.makedirs(path_img, exist_ok=True)
-    split_to_pdf([path_0_24, path_25_49, path_50_51], path_tmp)
-    pdf2images(path_tmp, path_img)
+    split_to_pdf([path_0_24, path_25_49, path_50_51], path_tmp_pdf)
+    pdf2images(path_tmp_pdf, path_tmp_jpg)
+    jpg_resize(path_tmp_jpg, path_img)
 
 
 def split_to_pdf(pdf_pathes: List[str], out_dir: str):
@@ -60,11 +63,16 @@ def pdf2images(pdf_dir: str, out_dir: str):
     for i, path in enumerate(pathes):
         image = pdf2image.convert_from_path(path, dpi=50, fmt=out_format)
         image = image[0]
-        rate = 0.5
-        dsize = (int(image.width * rate), int(image.height * rate))
-        # print(dsize)
-        image.resize(dsize)
         image.save(f"{out_dir}/{i}.jpg")
+
+
+def jpg_resize(jpg_dir: str, out_dir: str):
+    pathes = [f"{jpg_dir}/{i}.jpg" for i in range(52)]
+    for i, path in enumerate(pathes):
+        image = cv2.imread(path)
+        dsize = (360, 590)
+        image = cv2.resize(image, dsize)
+        cv2.imwrite(f"{out_dir}/{i}.jpg", image)
 
 
 if __name__ == "__main__":
