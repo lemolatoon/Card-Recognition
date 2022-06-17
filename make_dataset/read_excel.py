@@ -1,5 +1,5 @@
 import openpyxl
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 import numpy as np
 
 
@@ -37,8 +37,11 @@ def read_excel(path: Optional[str] = None):
 
 
 class BoxLabelData:
-    def __init__(self, min_x: int, min_y: int, max_x: int, max_y: int):
-        self.labels: List[int] = [min_x, min_y, max_x, max_y]
+    def __init__(self, min_x: Union[int, float], min_y: Union[int, float], max_x: Union[int, float], max_y: Union[int, float]):
+        self.labels: List[Union[int, float]] = [min_x, min_y, max_x, max_y]
+        self.width = None
+        self.height = None
+        self.class_label = None
 
     def box_positions(self) -> List[np.ndarray]:
         positions = []
@@ -48,6 +51,25 @@ class BoxLabelData:
         positions.append(np.array([self.labels[2], self.labels[3]], dtype=np.float32))  # right down
 
         return positions
+
+    def set_img_param(self, width: int, height: int, class_label: int):
+        self.width = width
+        self.height = height
+        self.class_label = class_label
+
+    def yolo_labels(self) -> Optional[List[Union[int, float]]]:
+        if self.width is None or self.height is None or self.class_label is None:
+            return None
+        label: List[Union[int, float]] = []
+        assert(type(self.class_label) is int)
+        label.append(self.class_label)  # class
+        label.append((self.labels[0] + self.labels[2]) / 2.0)  # x_center
+        label.append((self.labels[1] + self.labels[3]) / 2.0)  # y_center
+        # Note: have to normalize
+        label.append((self.labels[2] - self.labels[0]) * 1.0 / self.width)  # width
+        label.append((self.labels[3] - self.labels[1]) * 1.0 / self.height)  # height
+
+        return label
 
 
 if __name__ == "__main__":
