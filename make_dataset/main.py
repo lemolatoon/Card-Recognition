@@ -5,6 +5,7 @@ import copy
 from tqdm import tqdm
 import sys
 from pathlib import Path
+from read_excel import read_excel, BoxLabelData
 
 
 def get_script_dir() -> str:
@@ -32,6 +33,7 @@ def main():
     # dataset_path: str = f"{get_script_dir()}/../images/datasets_desk/"
     dataset_path: str = f"{get_script_dir()}/../images/datasets/{dir_name}/"
     try_count: int = 1
+    box_label_list = read_excel()
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
         card = cv2.imread(f"{cards_path}{i}.jpg")
@@ -41,46 +43,35 @@ def main():
             background = cv2.imread(str(img_path))
             for k in range(try_count):  # try affine count
                 converted = random_affine(
-                    card, copy.deepcopy(background), resize=True)
+                    card, copy.deepcopy(background), box_label_list[i], resize=True)
                 if converted is None:
                     k = k + 1
                     continue
-                # print(f"{dataset_path}{i}/{j * 100 + k}.jpg")
                 cv2.imwrite(
-                    f"{dataset_path}{i}/{(j - 1) * try_count + k}.jpg", converted)
+                    f"{dataset_path}{i}/{(j) * try_count + k}.jpg", converted)
+                print(f"{dataset_path}{i}/{(j) * try_count + k}.jpg")
+                sys.exit(0)
 
 
-def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool = False, resize_length: int = 255) -> np.ndarray:
-    simbol_pos = [(),(),(),()]
+def random_affine(card_img: np.ndarray, background_img: np.ndarray, box_label: BoxLabelData, resize: bool = False, resize_length: int = 255) -> np.ndarray:
     if background_img is None:
         return None
-    background_img = cv2.resize(background_img, (500, 500))
+    background_img = cv2.resize(background_img, (resize_length, resize_length))
 
-    # reshape
-    rate = background_img.shape[0] / (3.5 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
-
-    #トランプの画像のサイズ？
-    dsize = (int(card_img.shape[1] * rate), int(card_img.shape[0] * rate))
-    card_img = cv2.resize(card_img, dsize)
     cv2.imwrite("fig.png", card_img)
     # sys.exit(0)
 
     # 明度をランダムに変更
     card_img = cv2.cvtColor(card_img, cv2.COLOR_BGR2HSV)
-    v_mag = 0.7 + np.random.random()
+    # v_mag = 0.7 + np.random.random()
+    v_mag = 1
     card_img[:, :, (2)] = card_img[:, :, (2)] * v_mag
-    # for _ in range(3):
-    #     h_deg = 0  # 色相
-    #     s_mag = min(max(np.random.random() * 1.3, 1.1), 0.5)  # 彩度
-    #     v_mag = max(min(np.random.random() * 0.8, 0.8), 1.1)  # 明度
-    #     w_choice = np.random.choice(card_img.shape[0], card_img.shape[0] // 7)
-    #     h_choice = np.random.choice(card_img.shape[1], card_img.shape[1] // 7)
-    #     card_img[:, h_choice,
-    #              (2)] = card_img[:, h_choice, (2)] * v_mag
-    #     card_img[w_choice, :,
-    #              (2)] = card_img[w_choice, :, (2)] * v_mag
-
     card_img = cv2.cvtColor(card_img, cv2.COLOR_HSV2BGR)
+
+    # scale 1
+    s = background_img.shape[0] / (3.5 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
+    print(s)
+    resize_matrix = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
 
     # 歪ませる
     height = background_img.shape[0]
@@ -99,32 +90,39 @@ def random_affine(card_img: np.ndarray, background_img: np.ndarray, resize: bool
     move_y = height / 2 + height / 10 * (np.random.random() - 0.5)
     move = np.array([[1, 0, move_x], [0, 1, move_y], [0, 0, 1]])
 
+    # scale
     s = min(min(width / card_img.shape[0], height /
                 card_img.shape[1]) * np.random.random() * 0.8, 1)
     scale = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
-    # matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
+    matrix = scale
 
-    # matrix = matrix / \
-    # np.linalg.det(matrix) * (0.5 + np.random.random()) * \
-    # 0.1 * min(height, width) / \
-    # np.sqrt(card_img.shape[0] ** 2 + card_img.shape[1] ** 2)
-    matrix = np.dot(scale, np.dot(
-        rotate_z, np.dot(rotate_y, rotate_x)))
+    matrix = np.dot(np.dot(
+        rotate_z, np.dot(rotate_y, rotate_x)), matrix)
     determinant = np.linalg.det(matrix)
     if determinant < 0.5:
         s = max(1 / determinant * (np.random.random() + 0.5) / 3, 1 / determinant)
         scale = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
         matrix = np.dot(scale, matrix)
     matrix = np.dot(move, matrix)
+    matrix = np.dot(matrix, resize_matrix)
+
+    symbol_positions = box_label.box_positions()
+    converted_symbols = cv2.perspectiveTransform(np.array([symbol_positions], dtype=np.float32), matrix)
+    converted_symbols = np.int64(converted_symbols)
+    print(f"{symbol_positions} -> \n{converted_symbols}")
 
     dsize = (width, height)
 
-    dst = cv2.warpPerspective(card_img, matrix, borderMode=cv2.BORDER_TRANSPARENT,
-                              dsize=dsize, dst=background_img)
+    dst = cv2.warpPerspective(card_img, matrix, borderMode=cv2.BORDER_TRANSPARENT, dsize=dsize, dst=background_img)
     # dst = cv2.warpPerspective(
     #     card_img, matrix, flags=cv2.INTER_CUBIC, dsize=(size, size))
-    if resize:
-        dst = cv2.resize(dst, (resize_length, resize_length))
+    print(dst.shape)
+    for pos in converted_symbols[0]:
+        assert(type(pos[0]) is np.int64)
+        if pos[0] < 0 or pos[0] > dst.shape[0] or pos[1] < 0 or pos[1] > dst.shape[1]:
+            continue
+        print("plot")
+        dst = cv2.circle(dst, (pos[0], pos[1]), radius=2, color=(0, 0, 255), thickness=1)
     return dst
 
 
