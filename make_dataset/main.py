@@ -27,7 +27,7 @@ def main():
     background_path: str = f"{get_script_dir()}/../images/background/{background_word}/"
 
     img_pathes = np.array(list(Path(background_path).glob("*.jpg")))
-    img_pathes = img_pathes[np.random.choice(img_pathes.shape[0], 1500)]
+    img_pathes = img_pathes[np.random.choice(img_pathes.shape[0], 100)]
 
     print(img_pathes.shape)
     print(background_path)
@@ -67,8 +67,11 @@ def image_save(img, dataset_path: str, card_idx: int, back_idx: int, try_idx: in
 def label_save(labels: BoxLabelData, dataset_path: str, card_idx: int, back_idx: int, try_idx: int, n_try_count: int):
     path = f"{dataset_path}/labels/{52 * ((back_idx) * n_try_count + try_idx) + card_idx}.txt"
     with open(path, mode="w") as f:
-        for param in labels.yolo_labels():
-            f.write(f"{param} ")
+        for idx, param in enumerate(labels.yolo_labels()):
+            if idx != 0:
+                f.write(f"{param:.6f} ")
+            else:
+                f.write(f"{param} ")
         f.write("\n")
 
 

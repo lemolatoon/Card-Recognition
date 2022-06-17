@@ -15,4 +15,13 @@ background:
 train:
 	python3 cnn/main.py
 
+train_yolo:
+	python3 yolov5/train.py --img 256 --batch 64 --epochs 64 --data card.yaml --weights yolov5s.pt
+
+test_yolo:
+	python3 yolov5/detect.py --img 256 --weights yolov5/runs/train/exp8/weights/last.pt --source images/competition_sample/jpg 
+
+rm_yolos:
+	rm ~/workspace/Card-Recognition/images/datasets/yolo -r
+
 all: setup cardimg datasets background train

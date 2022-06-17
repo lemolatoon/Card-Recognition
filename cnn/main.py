@@ -650,7 +650,15 @@ def load_model() -> nn.Module:
     return model
 
 
+def get_classes() -> List[str]:
+    res = []
+    for i in range(52):
+        res.append(get_class_name(torch.tensor(i)))
+    print(res)
+
+
 if __name__ == "__main__":
-    main()
+    get_classes()
+    # main()
     # check_history()
     # check_my_img()
