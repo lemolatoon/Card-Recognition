@@ -63,8 +63,8 @@ class BoxLabelData:
         label: List[Union[int, float]] = []
         assert(type(self.class_label) is int)
         label.append(self.class_label)  # class
-        label.append((self.labels[0] + self.labels[2]) / 2.0)  # x_center
-        label.append((self.labels[1] + self.labels[3]) / 2.0)  # y_center
+        label.append((self.labels[0] + self.labels[2]) / 2.0 / self.width)  # x_center
+        label.append((self.labels[1] + self.labels[3]) / 2.0 / self.height)  # y_center
         # Note: have to normalize
         label.append((self.labels[2] - self.labels[0]) * 1.0 / self.width)  # width
         label.append((self.labels[3] - self.labels[1]) * 1.0 / self.height)  # height
