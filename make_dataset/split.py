@@ -16,7 +16,8 @@ def get_script_dir() -> str:
 
 def main():
     yolo_base_path: str = f"{get_script_dir()}/../images/datasets/yolo"
-    yolo_base_root_path: str = f"{yolo_base_path}/root"
+    dir_name: str = "real_root"
+    yolo_base_root_path: str = f"{yolo_base_path}/{dir_name}"
     image_base_root: str = f"{yolo_base_root_path}/images"
     labels_base_root: str = f"{yolo_base_root_path}/labels"
     images_files = np.array(list(Path(image_base_root).glob("*.jpg")))

@@ -654,7 +654,8 @@ def get_classes() -> List[str]:
     res = []
     for i in range(52):
         res.append(get_class_name(torch.tensor(i)))
-    print(res)
+    for card in res:
+        print(card)
 
 
 if __name__ == "__main__":

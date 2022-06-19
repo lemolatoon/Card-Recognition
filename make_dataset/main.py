@@ -27,7 +27,7 @@ def main():
     background_path: str = f"{get_script_dir()}/../images/background/{background_word}/"
 
     img_pathes = np.array(list(Path(background_path).glob("*.jpg")))
-    img_pathes = img_pathes[np.random.choice(img_pathes.shape[0], 100)]
+    img_pathes = img_pathes[np.random.choice(img_pathes.shape[0], 1500)]
 
     print(img_pathes.shape)
     print(background_path)
@@ -82,7 +82,7 @@ def im_write_path(dataset_path: str, card_idx: int, back_idx: int, try_idx: int,
         return f"{dataset_path}{card_idx}/{(back_idx) * n_try_count + try_idx}.jpg"
 
 
-def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndarray, box_label: BoxLabelData, resize: bool = False, resize_length: int = 255) -> Tuple[np.ndarray, BoxLabelData]:
+def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndarray, box_label: BoxLabelData, resize: bool = False, resize_length: int = 512) -> Tuple[np.ndarray, BoxLabelData]:
     if background_img is None:
         return None, None
     background_img = cv2.resize(background_img, (resize_length, resize_length))
@@ -98,7 +98,7 @@ def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndar
     card_img = cv2.cvtColor(card_img, cv2.COLOR_HSV2BGR)
 
     # scale 1
-    s = background_img.shape[0] / (3.5 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
+    s = background_img.shape[0] / (5.0 + 0.2 * (np.random.random() - 0.5)) / card_img.shape[0]
     resize_matrix = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
 
     # 歪ませる
