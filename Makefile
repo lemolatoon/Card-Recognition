@@ -15,11 +15,22 @@ background:
 train:
 	python3 cnn/main.py
 
+IMG_SIZE=512
+BATCH=16
+EPOCHS=30
+YOLO_MODEL=s
+#n, s, m, l, x
 train_yolo:
-	python3 yolov5/train.py --img 256 --batch 64 --epochs 64 --data card.yaml --weights yolov5s.pt
+	python3 yolov5/train.py --img $(IMG_SIZE) --batch $(BATCH) --epochs $(EPOCHS) --data card.yaml --weights yolov5$(YOLO_MODEL).pt
 
+# exp19: BATCH 128, epochs 64 IMG_SIZE 128 model: m
+# exp24: BATCH 16, epochs 209 IMG_SIZE 512 model: l 
+test_real_yolo:
+	python3 yolov5/detect.py --img $(IMG_SIZE) --weights yolov5/runs/train/exp24/weights/last.pt --source images/competition_sample/jpg 
+
+SRC=trump.mp4
 test_yolo:
-	python3 yolov5/detect.py --img 256 --weights yolov5/runs/train/exp8/weights/last.pt --source images/competition_sample/jpg 
+	python3 yolov5/detect.py --img $(IMG_SIZE) --weights yolov5/runs/train/exp24/weights/last.pt --source $(SRC)
 
 rm_yolos:
 	rm ~/workspace/Card-Recognition/images/datasets/yolo -r
