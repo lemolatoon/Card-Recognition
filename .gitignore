@@ -8,3 +8,4 @@ images/
 *.pdf
 *.xlsx
 *.mp4
+wandb/
