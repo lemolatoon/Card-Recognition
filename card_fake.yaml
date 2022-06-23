@@ -1,0 +1,7 @@
+train: ../images/datasets/yolo/root
+val: ../images/datasets/yolo/real_root
+
+# number of classes
+nc: 52
+
+names: ['SpadeK', 'SpadeQ', 'SpadeJ', 'Spade10', 'Spade9', 'Spade8', 'Spade7', 'Spade6', 'Spade5', 'Spade4', 'Spade3', 'Spade2', 'SpadeA', 'HeartK', 'HeartQ', 'HeartJ', 'Heart10', 'Heart9', 'Heart8', 'Heart7', 'Heart6', 'Heart5', 'Heart4', 'Heart3', 'Heart2', 'HeartA', 'DiamondK', 'DiamondQ', 'DiamondJ', 'Diamond10', 'Diamond9', 'Diamond8', 'Diamond7', 'Diamond6', 'Diamond5', 'Diamond4', 'Diamond3', 'Diamond2', 'DiamondA', 'ClubK', 'ClubQ', 'ClubJ', 'Club10', 'Club9', 'Club8', 'Club7', 'Club6', 'Club5', 'Club4', 'Club3', 'Club2', 'ClubA']

@@ -28,8 +28,9 @@ def main():
     print(labels_files.shape)
     n_data = np.min([images_files.shape[0], labels_files.shape[0]])
     idx_list = np.random.choice(n_data, n_data)
-    val_idx = idx_list[:int(n_data * 0.2)]
-    train_idx = idx_list[int(n_data * 0.2):]
+    rate: float = 0.05
+    val_idx = idx_list[:int(n_data * rate)]
+    train_idx = idx_list[int(n_data * rate):]
 
     val_images = images_files[val_idx]
     val_labels = [Path(f"{labels_base_root}/{img_path.stem}.txt") for img_path in val_images]
@@ -44,11 +45,27 @@ def main():
     os.makedirs(f"{yolo_train_base}/images", exist_ok=True)
     os.makedirs(f"{yolo_train_base}/labels", exist_ok=True)
 
-    for v_img, v_lbl, t_img, t_lbl in tqdm(zip(val_images, val_labels, train_images, train_labels)):
-        shutil.copy(str(v_img), f"{yolo_val_base}/images/{v_img.stem}.jpg")
-        shutil.copy(str(v_lbl), f"{yolo_val_base}/labels/{v_lbl.stem}.txt")
-        shutil.copy(str(t_img), f"{yolo_train_base}/images/{t_img.stem}.jpg")
-        shutil.copy(str(t_lbl), f"{yolo_train_base}/labels/{t_lbl.stem}.txt")
+    print("Creating validation data...")
+    for v_img, v_lbl in tqdm(zip(val_images, val_labels)):
+        try:
+            shutil.copy(str(v_img), f"{yolo_val_base}/images/{v_img.stem}.jpg")
+        except:
+            print(f"\n{yolo_val_base}/images/{v_img.stem}.jpg is missing")
+        try:
+            shutil.copy(str(v_lbl), f"{yolo_val_base}/labels/{v_lbl.stem}.txt")
+        except:
+            print(f"\n{yolo_val_base}/labels/{v_lbl.stem}.txt is missing")
+
+    print("Creating train data...")
+    for t_img, t_lbl in tqdm(zip(train_images, train_labels)):
+        try:
+            shutil.copy(str(t_img), f"{yolo_train_base}/images/{t_img.stem}.jpg")
+        except:
+            print(f"\n{yolo_train_base}/images/{t_img.stem}.jpg is missing")
+        try:
+            shutil.copy(str(t_lbl), f"{yolo_train_base}/labels/{t_lbl.stem}.txt")
+        except:
+            print(f"\n{yolo_train_base}/labels/{t_lbl.stem}.txt is missing")
 
 
 if __name__ == "__main__":

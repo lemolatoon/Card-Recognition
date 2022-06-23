@@ -43,6 +43,14 @@ class BoxLabelData:
         self.height = None
         self.class_label = None
 
+    @staticmethod
+    def new(center_x: float, center_y: float, box_w: float, box_h: float, width: int, height: int):
+        min_x = (center_x - box_w / 2) * width
+        min_y = (center_y - box_h / 2) * height
+        max_x = (center_x + box_w / 2) * width
+        max_y = (center_y + box_h / 2) * height
+        return BoxLabelData(min_x, min_y, max_x, max_y)
+
     def box_positions(self) -> List[np.ndarray]:
         positions = []
         positions.append(np.array([self.labels[0], self.labels[1]], dtype=np.float32))  # left up
@@ -51,6 +59,7 @@ class BoxLabelData:
         positions.append(np.array([self.labels[2], self.labels[3]], dtype=np.float32))  # right down
 
         return positions
+    
 
     def set_img_param(self, width: int, height: int, class_label: int):
         self.width = width

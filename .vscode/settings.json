@@ -5,7 +5,7 @@
     "python.autoComplete.extraPaths": [
         "/home/ubuntu/.local/share/virtualenvs/Card-Recognition-_0t22FVl/lib/python3.7/site-packages"
     ],
-    "python.formatting.autopep8Path": "/home/ubuntu/.local/share/virtualenvs/Card-Recognition-_0t22FVl/bin/autopep8",
+    // "python.formatting.autopep8Path": "/home/ubuntu/.local/share/virtualenvs/Card-Recognition-_0t22FVl/bin/autopep8",
     "python.formatting.autopep8Args": [
         "--ignore",
         "E70",
