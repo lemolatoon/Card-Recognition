@@ -1,4 +1,4 @@
-.PHONY: setup cardimg datasets background train all
+.PHONY: setup cardimg datasets background train all for_test
 setup:
 	sudo apt install poppler-utils
 	pip install -r requirements.txt
@@ -17,14 +17,14 @@ train:
 
 IMG_SIZE=512
 BATCH=16
-EPOCHS=150
-YOLO_MODEL=m
-N_TRAIN_EXP=36
-DATA=card.yaml
+EPOCHS=30
+YOLO_MODEL=s
+N_TRAIN_EXP=39
+DATA=card_fake.yaml
 #n, s, m, l, x
 train_yolo:
-	# python3 yolov5/train.py --img $(IMG_SIZE) --batch $(BATCH) --epochs $(EPOCHS) --data card.yaml --weights yolov5$(YOLO_MODEL).pt
-	python3 yolov5/train.py --img $(IMG_SIZE) --batch $(BATCH) --epochs $(EPOCHS) --data $(DATA) --weights yolov5/runs/train/exp$(N_TRAIN_EXP)/weights/last.pt
+	python3 yolov5/train.py --img $(IMG_SIZE) --batch $(BATCH) --epochs $(EPOCHS) --data $(DATA) --weights yolov5$(YOLO_MODEL).pt
+	# python3 yolov5/train.py --img $(IMG_SIZE) --batch $(BATCH) --epochs $(EPOCHS) --data $(DATA) --weights yolov5/runs/train/exp$(N_TRAIN_EXP)/weights/last.pt
 
 # exp19: BATCH 128, epochs 64 IMG_SIZE 128 model: m with fake
 # exp24: BATCH 16, epochs 209 IMG_SIZE 512 model: l with fake
@@ -35,13 +35,20 @@ train_yolo:
 # exp34: BATCH 16, epochs 100 IMG_SIZE 512 model: m with real
 # exp36: BATCH 16, epochs 200+exp34 IMG_SIZE 512 model: m with real
 # exp39: BATCH 16, epochs 150+exp36 IMG_SIZE 512 model: m with real
-N_EXP=39
+# exp40: BATCH 16, epochs 100+exp39 IMG_SIZE 512 model: m with real
+# exp44: BATCH 16, epochs 30 IMG_SIZE 512 model: m with fakev0
+# exp45: BATCH 16, epochs 30 IMG_SIZE 512 model: s with fakev0
+N_EXP=44
 test_real_yolo:
 	python3 yolov5/detect.py --img $(IMG_SIZE) --weights yolov5/runs/train/exp$(N_EXP)/weights/last.pt --source images/competition_sample/jpg 
 
 SRC=trump.mp4
 test_yolo:
 	python3 yolov5/detect.py --img $(IMG_SIZE) --weights yolov5/runs/train/exp$(N_EXP)/weights/last.pt --source $(SRC)
+	
+
+for_test:
+	python3 yolov5/detect.py --img $(IMG_SIZE) --weights yolov5/runs/train/exp$(N_EXP)/weights/last.pt --source for_test
 
 rm_yolos:
 	rm ~/workspace/Card-Recognition/images/datasets/yolo -r

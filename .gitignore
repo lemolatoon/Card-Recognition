@@ -8,4 +8,7 @@ images/
 *.pdf
 *.xlsx
 *.mp4
+labeling/labels
 wandb/
+*.jpeg
+make_dataset/pdf/labels

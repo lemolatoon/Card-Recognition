@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 import cv2
 import os
@@ -39,19 +39,32 @@ def main():
     dataset_yolo_path: str = f"{get_script_dir()}/../images/datasets/yolo/{dir_name}/"
     os.makedirs(f"{dataset_yolo_path}images/", exist_ok=True)
     os.makedirs(f"{dataset_yolo_path}labels/", exist_ok=True)
+    images_base: str = f"{get_script_dir()}/pdf"
+    images_imgs = f"{images_base}/images"
+    images_lbl = f"{images_base}/labels"
 
     try_count: int = 1
-    box_label_list = read_excel()
+    # box_label_list = read_excel()
     for i in range(52):
         os.makedirs(f"{dataset_path}{i}", exist_ok=True)
+        box_list: List[BoxLabelData] = []
         card = cv2.imread(f"{cards_path}{i}.jpg")
+        with open(f"{images_lbl}/{i}.txt", mode="r") as f:
+            for line in f.readlines():
+                box = []
+                for val in line.split(" ")[1:]:
+                    box.append(float(val))
+                box_list.append(BoxLabelData.new(*box, width=card.shape[1], height=card.shape[0]))
+                box_list[0]
+            
         print(f"[{i+1}/53]")
         for j, img_path in enumerate(tqdm(img_pathes)):  # num background
             # print(f"(i, j): {(i, j)}")
             background = cv2.imread(str(img_path))
             for k in range(try_count):  # try affine count
+                # TODO: change assert(box_label_list[i], List[Union[float, int]])
                 converted, converted_labels = random_affine(
-                    card, i, copy.deepcopy(background), box_label_list[i], resize=True)
+                    card, i, copy.deepcopy(background), box_list, resize=True)
                 if converted is None:
                     k = k + 1
                     continue
@@ -67,12 +80,13 @@ def image_save(img, dataset_path: str, card_idx: int, back_idx: int, try_idx: in
 def label_save(labels: BoxLabelData, dataset_path: str, card_idx: int, back_idx: int, try_idx: int, n_try_count: int):
     path = f"{dataset_path}/labels/{52 * ((back_idx) * n_try_count + try_idx) + card_idx}.txt"
     with open(path, mode="w") as f:
-        for idx, param in enumerate(labels.yolo_labels()):
-            if idx != 0:
-                f.write(f"{param:.6f} ")
-            else:
-                f.write(f"{param} ")
-        f.write("\n")
+        for label in labels:
+            for idx, param in enumerate(label.yolo_labels()):
+                if idx != 0:
+                    f.write(f"{param:.6f} ")
+                else:
+                    f.write(f"{param} ")
+            f.write("\n")
 
 
 def im_write_path(dataset_path: str, card_idx: int, back_idx: int, try_idx: int, n_try_count: int, yolo: bool = False) -> str:
@@ -82,7 +96,7 @@ def im_write_path(dataset_path: str, card_idx: int, back_idx: int, try_idx: int,
         return f"{dataset_path}{card_idx}/{(back_idx) * n_try_count + try_idx}.jpg"
 
 
-def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndarray, box_label: BoxLabelData, resize: bool = False, resize_length: int = 512) -> Tuple[np.ndarray, BoxLabelData]:
+def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndarray, box_label: List[BoxLabelData], resize: bool = False, resize_length: int = 512) -> Tuple[np.ndarray, List[BoxLabelData]]:
     if background_img is None:
         return None, None
     background_img = cv2.resize(background_img, (resize_length, resize_length))
@@ -134,8 +148,8 @@ def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndar
     matrix = np.dot(move, matrix)
     matrix = np.dot(matrix, resize_matrix)
 
-    symbol_positions = box_label.box_positions()
-    converted_symbols = cv2.perspectiveTransform(np.array([symbol_positions], dtype=np.float32), matrix)
+    symbol_positions = [box.box_positions() for box in box_label]
+    converted_symbols = cv2.perspectiveTransform(np.array(symbol_positions, dtype=np.float32), matrix)
     converted_symbols_int = np.int64(converted_symbols)
     # print(f"{symbol_positions} -> \n{converted_symbols_int}")
 
@@ -145,22 +159,29 @@ def random_affine(card_img: np.ndarray, card_label: int, background_img: np.ndar
     # dst = cv2.warpPerspective(
     #     card_img, matrix, flags=cv2.INTER_CUBIC, dsize=(size, size))
     # print(dst.shape)
-    for pos in converted_symbols_int[0]:
-        assert(type(pos[0]) is np.int64)
-        if pos[0] < 0 or pos[0] > dst.shape[0] or pos[1] < 0 or pos[1] > dst.shape[1]:
-            # return continue
-            # 記号が画像に収まっていないときはNoneを返す
-            return None, None
-        # print("plot")
-        # dst = cv2.circle(dst, (pos[0], pos[1]), radius=2, color=(0, 0, 255), thickness=1)
-    converted_symbols = converted_symbols[0]
-    min_x = np.min(converted_symbols[:][0])
-    max_x = np.max(converted_symbols[:][0])
-    min_y = np.min(converted_symbols[:][1])
-    max_y = np.max(converted_symbols[:][1])
-    converted_labels = BoxLabelData(min_x, min_y, max_x, max_y)
-    converted_labels.set_img_param(dst.shape[0], dst.shape[1], card_label)
-    return dst, converted_labels
+    for converted_symbol_int in converted_symbols_int:
+        for pos in converted_symbol_int:
+            assert(type(pos[0]) is np.int64)
+            if pos[0] < 0 or pos[0] > dst.shape[0] or pos[1] < 0 or pos[1] > dst.shape[1]:
+                # return continue
+                # 記号が画像に収まっていないときはNoneを返す
+                return None, None
+            # print("plot")
+            # dst = cv2.circle(dst, (pos[0], pos[1]), radius=2, color=(0, 0, 255), thickness=3)
+    labels = []
+    for converted_symbol in converted_symbols:
+        min_x = np.min(converted_symbol.T[0])
+        max_x = np.max(converted_symbol.T[0])
+        min_y = np.min(converted_symbol.T[1])
+        max_y = np.max(converted_symbol.T[1])
+        # dst = cv2.circle(dst, (int(min_x) - 1, int(min_y) - 1), radius=2, color=(0, 0, 255), thickness=2)
+        # dst = cv2.circle(dst, (int(min_x) - 1, int(max_y) + 1), radius=2, color=(0, 0, 255), thickness=2)
+        # dst = cv2.circle(dst, (int(max_x) + 1, int(min_y) - 1), radius=2, color=(0, 0, 255), thickness=2)
+        # dst = cv2.circle(dst, (int(max_x) + 1, int(max_y) + 1), radius=2, color=(0, 0, 255), thickness=2)
+        converted_label = BoxLabelData(min_x, min_y, max_x, max_y)
+        converted_label.set_img_param(dst.shape[0], dst.shape[1], card_label)
+        labels.append(converted_label)
+    return dst, labels
 
 
 if __name__ == "__main__":
