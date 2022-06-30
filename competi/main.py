@@ -62,7 +62,11 @@ def main():
     print(f"acc: {acc}")
     print(f"N_k: {N_k}")
     s = get_s(N_k, acc)
-    print(s)
+    print(f"s: {s}")
+    import datetime
+    dt_now = datetime.datetime.now()
+    with open(f"{get_script_dir()}/../competi/s.txt", mode= "a") as f:
+        f.write(f"{dt_now}:\n{s}\n")
 
 
 def card_num(class_name:str) -> int:    
