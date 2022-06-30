@@ -40,21 +40,25 @@ def main():
     n_case = 0
     for stem, label in stem_label:
         path = out_labels_path + stem + ".txt"
-        with open(path, mode="r") as f:
-            lines = f.readlines()
-        conf = 0
-        for line in lines:
-            line = line.strip()
-            line = line.split(" ")
-            # pred_label2 = line.index(max(conf, float(line[5])))[0]
+        pred_label = "s13"
+        try:
+            with open(path, mode="r") as f:
+                lines = f.readlines()
             conf = 0
-            if float(line[5]) > conf:
-                conf = line[5]
-                pred_label= line[0]
-        
-        print(f"pred_label: {pred_label}, label: {label}")
-        if int(pred_label) == label:
-            n_correct += 1
+            for line in lines:
+                line = line.strip()
+                line = line.split(" ")
+                # pred_label2 = line.index(max(conf, float(line[5])))[0]
+                conf = 0
+                if float(line[5]) > conf:
+                    conf = line[5]
+                    pred_label= line[0]
+            
+            print(f"pred_label: {pred_label}, label: {label}")
+            if int(pred_label) == label:
+                n_correct += 1
+        except FileNotFoundError:
+            print(f"{path} does not exist.")
         n_case += 1
 
     print(f"n_correct: {n_correct}, n_case: {n_case}")
