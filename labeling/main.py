@@ -35,7 +35,7 @@ def main():
     save_txt = True
     save_img = True
 
-    run2(weights=w_path, imgsz=img_size, save_txt=save_txt, project=project_dir, source=source, line_thickness=thickness, box=True)
+    result = run2(weights=w_path, imgsz=img_size, save_txt=save_txt, project=project_dir, source=source, line_thickness=thickness, box=True)
     print("OK")
 
 

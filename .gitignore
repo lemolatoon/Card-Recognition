@@ -12,3 +12,5 @@ labeling/labels
 wandb/
 *.jpeg
 make_dataset/pdf/labels
+competi/out
+competi/out/exp/labels/*

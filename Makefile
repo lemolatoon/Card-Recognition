@@ -17,9 +17,9 @@ train:
 
 IMG_SIZE=512
 BATCH=16
-EPOCHS=30
-YOLO_MODEL=s
-N_TRAIN_EXP=39
+EPOCHS=50
+YOLO_MODEL=l
+N_TRAIN_EXP=44
 DATA=card_fake.yaml
 #n, s, m, l, x
 train_yolo:
@@ -36,9 +36,10 @@ train_yolo:
 # exp36: BATCH 16, epochs 200+exp34 IMG_SIZE 512 model: m with real
 # exp39: BATCH 16, epochs 150+exp36 IMG_SIZE 512 model: m with real
 # exp40: BATCH 16, epochs 100+exp39 IMG_SIZE 512 model: m with real
-# exp44: BATCH 16, epochs 30 IMG_SIZE 512 model: m with fakev0
+# exp44: BATCH 16, epochs 30 IMG_SIZE 512 model: l with fakev0
 # exp45: BATCH 16, epochs 30 IMG_SIZE 512 model: s with fakev0
-N_EXP=44
+# exp47: BATCH 16, epochs 50 IMG_SIZE 512 model: l with fakev0
+N_EXP=47
 test_real_yolo:
 	python3 yolov5/detect.py --img $(IMG_SIZE) --weights yolov5/runs/train/exp$(N_EXP)/weights/last.pt --source images/competition_sample/jpg 
 
