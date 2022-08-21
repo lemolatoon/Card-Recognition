@@ -1,0 +1,1 @@
+python3 yolov5/detect.py --source tests --weight weights/last.pt --data weights/card.yaml --img 512

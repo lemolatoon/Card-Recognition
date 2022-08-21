@@ -4,6 +4,21 @@
 mkdir -p images/cards
 mkdir -p images/backgrounds
 ```
+依存関係の解決
+```bash
+pipenv shell
+```
+インストールされているpythonのバージョンが異なる場合は, `Pipfile`を編集してください。
+```bash
+pip install -r requirements.txt
+pip install -r yolov5/requirements.txt
+```
+
+## 学習済みモデルを試す
+```powershell
+./camera.bat
+```
+
 ## yoloを用いた学習
 ### データセットを`images/datasets/yolo`配下におく
 ファイル構造の例
